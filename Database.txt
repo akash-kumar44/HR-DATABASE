@@ -1,0 +1,331 @@
+-- The 'Haryana Tourism Resorts database' manages bookings, events, and customer interactions for Haryana tourist resort events. 
+-- Customers can book resorts for events, each event is managed by an event manager, who has a supervisor.
+-- Guests attending the events receive entry passes.
+-- The system tracks payments for bookings.
+
+-- This database is designed to manage information about tourist resorts in Haryana. 
+-- It includes details about the resorts, the cities they are located in, the types of events organised
+-- Users can also manage customer bookings and entry passes.
+-- URL: https://www.haryanatourism.gov.in/
+
+-- DROP VIEW 
+drop view RESERVED_BY_CUSTOMERS cascade;
+
+-- DROP all the tables if they already exists in the database
+drop table if exists CUSTOMER cascade;
+drop table if exists RESERVATION cascade;
+drop table if exists PAYMENT;
+drop table if exists RESORT cascade;
+drop table if exists EVENTS cascade;
+drop table if exists EVENT_MANAGER cascade;
+drop table if exists RESORT_MANAGER;
+drop table if exists ENTRY_PASS;
+drop table if exists GUESTS cascade;
+
+----------------------------------------CREATE tables----------------------------- 
+------------------CUSTOMER, RESORT, EVENT_MANAGER, RESORT_MANAGER, EVENTS, RESERVATION, PAYMENT, GUESTS, ENTRY_PASS
+create table CUSTOMER(
+custID			integer,
+customerName		text not null,
+gender			char(1) not null,
+email			text,
+contactNo		varchar(10) not null,
+age			integer not null,
+address			text,
+
+constraint custID_PK primary key(custID),
+
+constraint age_check check(age < 100 and age > 18),
+constraint gender_check check(gender in ('M', 'F'))
+);
+
+create table RESORT(
+resortID		integer,
+resortName		text not null,
+city			text not null,
+address			text not null,
+contactNo		text not null,
+email			text not null,
+facilities		text,
+distanceFromDelhi	float,
+
+constraint resotID_PK primary key(resortID),
+
+constraint distance_check check(distanceFromDelhi > 0)
+);
+
+create table EVENT_MANAGER(
+managerID		integer,
+managerName		text not null,
+contactNo		varchar(10) not null,
+email			text not null,
+supervisorID		integer,
+
+constraint managerID_PK primary key(managerID),
+constraint supervisorID_FK foreign key(supervisorID) references EVENT_MANAGER
+);
+
+create table RESORT_MANAGER(
+resortID		integer,
+managerID		integer,
+
+constraint res_man_PK primary key(resortID,managerID),
+
+constraint resID_FK foreign key(resortID) references RESORT ON DELETE CASCADE,
+constraint manID_FK foreign key(managerID) references EVENT_MANAGER ON DELETE RESTRICT
+);
+
+create table EVENTS(
+eventID			integer,
+eventName		text not null,
+eventType		text not null,
+managerID		integer not null,
+
+constraint event_PK primary key(eventID),
+constraint managerID_FK foreign key(managerID) references EVENT_MANAGER ON DELETE RESTRICT
+);
+
+create table RESERVATION(
+reservationID		integer,
+custID			integer not null,
+resortID		integer not null,
+eventID			integer not null,
+reservationDay		integer not null,
+reservationMonth	integer not null,
+reservationYear		integer not null,
+reservedHours		integer not null,
+
+constraint resID_PK primary key(reservationID),
+
+constraint custID_FK foreign key(custID) references CUSTOMER ON DELETE RESTRICT,
+constraint resortID_FK foreign key(resortID) references RESORT ON DELETE RESTRICT,
+constraint eventID_FK foreign key(eventID) references EVENTS ON DELETE RESTRICT,
+
+constraint reservationDay_check check(reservationDay>0 and reservationDay<=31),
+constraint reservationMonth_check check(reservationMonth>0 and reservationMonth<=12),
+constraint reservationYear_check check(reservationYear>=2023)
+);
+
+
+create table PAYMENT(
+paymentID		integer,
+reservationID		integer,
+amount			float not null,
+paymentDay		integer not null,
+paymentMonth		integer not null,
+paymentYear		integer not null,
+paymentMethod		text not null,
+
+constraint pay_PK primary key(paymentID,reservationID),
+
+constraint resID_FK foreign key(reservationID) references RESERVATION ON DELETE CASCADE,
+
+constraint amount_check check(amount > 0),
+constraint paymentDay_check check(paymentDay>0 and paymentDay<=31),
+constraint paymentMonth_check check(paymentMonth>0 and paymentMonth<=12),
+constraint paymentYear_check check(paymentYear>=2023)
+);
+
+create table GUESTS(
+guestID			integer,
+guestName		text not null,
+guestContactNo		varchar(10) not null,
+
+constraint guestID_PK primary key(guestID)
+);
+
+create table ENTRY_PASS(
+reservationID		integer,
+guestID			integer,
+
+constraint entry_pass_PK primary key(reservationID,guestID),
+
+constraint reservationID_FK foreign key(reservationID) references RESERVATION ON DELETE CASCADE,
+constraint guestID_FK foreign key(guestID) references GUESTS ON DELETE CASCADE
+);
+
+----------------------------------------------- INSERT values in CUSTOMER table --------------------------------
+-- insert into CUSTOMER values(custID, customerName, email, contactNo, address)
+insert into CUSTOMER values(101,'Veenu Arora', 'F', 'veenuarora@gmail.com', '9452157624', 23, '#143, Ambala, Haryana, India');
+insert into CUSTOMER values(102,'Ravi Kumar', 'M', 'ravi@gmail.com', '9992547863', 24, '#564, Ambala, Haryana, India');
+insert into CUSTOMER values(103,'Sameer Bhatt', 'M', 'sameer1@gmail.com', '8956472361', 32,'#111, Kurukshetra, Haryana, India');
+insert into CUSTOMER values(104,'Simran Jeet Singh', 'M', 'simran250@gmail.com', '8852479652', 45,'#101, Kalka, Haryana, India');
+insert into CUSTOMER values(105,'Amandeep', 'M', 'amandeep210gmail.com', '9925478625', 61,'#333, Paschim Vihar, Delhi, India');
+insert into CUSTOMER values(106,'Jaskirat Singh', 'M', 'jass32@gmail.com', '8708372569', 48,'#232, Patiala, Punjab, India');
+insert into CUSTOMER values(107,'Manish Kalra', 'M', 'manishk33@gmail.com', '8845263597', 70,'#023, Nehru Place, Delhi, India');
+
+----------------------------------------------- INSERT values in RESORT table --------------------------------
+-- insert into RESORT values(resortID, resortName, city, address, contactNo, email,facilities)
+insert into RESORT values(1221,'Kingfisher Tourist Resort', 'Ambala', 'G.T.Road, NH-1, Ambala - 134003', '0171-2521570','kingfisher@hry.nic.in', 'Conference Hall, Restaurant, Motel, Gift Shop, Coffe Shop, Banquet Hall', 203);
+insert into RESORT values(1222,'Baya Tourist Complex', 'Bhiwani', 'Near Govt. Rest House, Hansi Road, Bhiwani - 127021', '01664-244040','baya@hry.nic.in', 'Restaurant, Motel, Banquet Hall', 112);
+insert into RESORT values(1223,'Sunbird Tourist Resort','Faridabad','Surajkund, Faridabad - 121009', '0129-2983555', 'sunbird@hry.nic.in', 'Motel, Bar, Swimming, Banquet Hall', 41.3);
+insert into RESORT values(1224, 'Papiha Tourist Complex', 'Fatehabad', 'Model Town, Fatehabad - 125050', '01667-220443', 'papiha@hry.nic.in', 'Motel, Restaurant, Banquet Hall', 219);
+insert into RESORT values(1225, 'Shama Tourist Complex', 'Gurugram', 'Civil Lines, Near Civil Hospital, Gurgaon - 122001', '0124-4304595', 'shama@hry.nic.in', 'Motel, Bar, Banquet Hall', 33.9);
+insert into RESORT values(1226, 'Blue Bird Tourist Resort', 'Sirsa', 'Sirsa By pass, Hisar - 125001', '01662-275131', 'bluebird@hry.nic.in', 'Hotel, Bar, Banquet Hall, Conference Hall', 169);
+insert into RESORT values(1227, 'Gauriyya Tourist Complex', 'Jhajjar', 'Rohtak Road, Bahadurgarh, Jhajjar - 124507', '01276-243855', 'gauriyya@hry.nic.in', 'Hotel, Bar, Banquet Hall, Conference Hall', 21.3);
+insert into RESORT values(1228, 'Bulbul Tourist Complex', 'Jind', 'Near Rani Talab, Jind - 126102', '01681-256087', 'bulbul@hry.nic.in', 'Hotel, Banquet Hall', 116);
+insert into RESORT values(1229, 'Koel Tourist Complex', 'Kaithal', 'Near Old Bus Stand, Kaithal - 136027', '01746-224270', 'koel@hry.nic.in', 'Hotel, Banquet Hall, Restaurant', 177);
+
+----------------------------------------------- INSERT values in EVENT_MANAGER table --------------------------------
+-- insert into EVENT_MANAGER values(managerID, managerName, contactNo, email, supervisorID)
+insert into EVENT_MANAGER values(42531,'Vijay Kumar', '7744256435', 'vijaykumar56@gmail.com');
+insert into EVENT_MANAGER values(25024,'Parshant Salvi', '9452153654', 'psaalvi@gmail.com',42531);
+insert into EVENT_MANAGER values(10254,'Shubham Saarwan', '7895648952', 'shubhamsaarwan789@gmail.com');
+insert into EVENT_MANAGER values(23654,'Renu Bala', '8453621598', 'rbala@gmail.com',42531);
+insert into EVENT_MANAGER values(35694,'Sandeep sode', '8877456695', 'sandeepsodemanager@gmail.com',10254);
+insert into EVENT_MANAGER values(32564,'Raghubir Singh', '9854126655', 'singhraghubir@gmail.com',23654);
+insert into EVENT_MANAGER values(26359,'Amit Bhumbak', '7965849658', 'bhumbak5@gmail.com',35694);
+insert into EVENT_MANAGER values(10235,'Suresh Raina', '9663258741', 'sraina87@gmail.com',26359);
+insert into EVENT_MANAGER values(11236, 'Virat Kohli', '8965741236','vkohli18@gmail.com',25024);
+
+----------------------------------------------- INSERT values in RESORT_MANAGER table --------------------------------
+-- insert into RESORT_MANAGER values(resortID, managerID)
+insert into RESORT_MANAGER values(1221,42531);
+insert into RESORT_MANAGER values(1226,42531);
+insert into RESORT_MANAGER values(1224,32564);
+insert into RESORT_MANAGER values(1224,10254);
+insert into RESORT_MANAGER values(1228,25024);
+insert into RESORT_MANAGER values(1227,25024);
+
+----------------------------------------------- INSERT values in EVENTS table --------------------------------
+-- insert into EVENTS values(eventID, eventName, eventType, managerID)
+insert into EVENTS values(1, 'Wedding Ceremony', 'Wedding',  10235);
+insert into EVENTS values(2, 'Corporate Conference', 'Conference', 42531);
+insert into EVENTS values(3, 'Birthday Party', 'Social Event', 23654);
+insert into EVENTS values(4, 'Product Launch', 'Corporate Event', 26359);
+insert into EVENTS values(5, 'Cultural Festival', 'Festival', 25024);
+insert into EVENTS values(6, 'Book Launch', 'Literary Event', 26359);
+insert into EVENTS values(7, 'Annual General Meeting', 'Corporate Event', 42531);
+insert into EVENTS values(8, 'Yoga Retreat', 'Wellness', 35694);
+insert into EVENTS values(9, 'Tech Meetup', 'Conference', 42531);
+insert into EVENTS values(10, 'Music Festival', 'Festival', 11236);
+
+
+----------------------------------------------- INSERT values in RESERVATION table --------------------------------
+-- insert into RESERVATION values(reservationID, custID, resortID, eventID, reservationDay,reservationMonth,reservationYear,reservationDuration)
+insert into RESERVATION values(2011, 102, 1221, 4, 12,08,2024,5);
+insert into RESERVATION values(2012, 101, 1229, 1, 15,08,2024,12);
+insert into RESERVATION values(2013, 104, 1221, 10, 12,08,2024,4);
+insert into RESERVATION values(2014, 105, 1224, 2, 10,07,2024,3);
+insert into RESERVATION values(2015, 102, 1223, 9, 06,07,2023,4);
+insert into RESERVATION values(2016, 103, 1224, 5, 01,01,2025,6);
+insert into RESERVATION values(2017, 101, 1222, 3, 09,10,2024,5);
+insert into RESERVATION values(2018, 107, 1229, 1, 10,06,2024,11);
+insert into RESERVATION values(2019, 105, 1221, 10, 01,01,2025,6);
+insert into RESERVATION values(2020, 102, 1225, 6, 09,10,2024,5);
+insert into RESERVATION values(2021, 103, 1227, 2, 01,10,2024,7);
+
+----------------------------------------------- INSERT values in PAYMENT table --------------------------------
+-- insert into PAYMENT values(paymentID,reservationID,amount,paymentDay,paymentMonth,paymentYear,paymentMethod)
+insert into PAYMENT values(10011, 2011, 10000.00, 10, 08, 2024, 'Debit Card');
+insert into PAYMENT values(10012, 2012, 24000.00, 10, 08, 2024, 'Cash');
+insert into PAYMENT values(10013, 2013, 8000.00, 09, 08, 2024, 'Bank Transfer');
+insert into PAYMENT values(10014, 2014, 2000.00, 07, 07, 2024, 'Bank Transfer');
+insert into PAYMENT values(10015, 2014, 4000.00, 07, 07, 2024, 'Cash');
+insert into PAYMENT values(10016, 2015, 8000.00, 30, 06, 2024, 'Bank Transfer');
+insert into PAYMENT values(10017, 2016, 12000.00, 30, 11, 2024, 'Credit Card');
+insert into PAYMENT values(10018, 2017, 10000.00, 01, 10, 2024, 'Cash');
+insert into PAYMENT values(10019, 2018, 10000.00, 29, 05, 2024, 'Cash');
+insert into PAYMENT values(10020, 2018, 12000.00, 30, 05, 2024, 'Debit Card');
+insert into PAYMENT values(10021, 2019, 12000.00, 16, 11, 2024, 'Credit Card');
+insert into PAYMENT values(10022, 2020, 10000.00, 07, 10, 2024, 'Debit Card');
+insert into PAYMENT values(10023, 2021, 3000.00, 27, 09, 2024, 'Debit Card');
+insert into PAYMENT values(10024, 2021, 11000.00, 29, 09, 2024, 'Cash');
+
+----------------------------------------------- INSERT values in GUESTS table --------------------------------
+-- insert into GUESTS values(guestID, guestName, guestContactNo)
+insert into GUESTS values(101,'Veenu Arora', '9452157624');
+insert into GUESTS values(102,'Ravi Kumar', '9992547863');
+insert into GUESTS values(103,'Sameer Bhatt', '8956472361');
+insert into GUESTS values(104,'Simran Jeet Singh', '8852479652');
+insert into GUESTS values(105,'Amandeep', '9925478625');
+insert into GUESTS values(106,'Jaskirat Singh', '8708372569');
+insert into GUESTS values(107,'Manish Kalra', '8845263597');
+insert into GUESTS values(108, 'Amit Sharma', '9876543210');    
+insert into GUESTS values(109, 'Pooja Kumari', '9123456789');   
+insert into GUESTS values(110, 'Sukhwinder Singh', '9234567890');
+insert into GUESTS values(111, 'Shabana Khan', '9345678901');
+insert into GUESTS values(112, 'Rahul Yadav', '9456789012');
+insert into GUESTS values(113, 'Neha Gupta', '9567890123');
+insert into GUESTS values(114, 'Jatin Bhardwaj', '9678901234');
+insert into GUESTS values(115, 'Roshan Das', '9789012345');
+insert into GUESTS values(116, 'Daniel Fernandes', '9890123456');
+insert into GUESTS values(117, 'Meera Devi', '9901234567');
+insert into GUESTS values(118, 'Mohammed Ansari', '9012345678');
+insert into GUESTS values(119, 'Arjun Saini', '9123456780');
+insert into GUESTS values(120, 'Harpreet Kaur', '9234567891');
+insert into GUESTS values(121, 'Ayesha Qureshi', '9345678902');
+insert into GUESTS values(122, 'Sunil Chauhan', '9456789013');
+insert into GUESTS values(123, 'Jyoti Meena', '9567890124');
+insert into GUESTS values(124, 'Rakesh Sutar', '9678901235');
+insert into GUESTS values(125, 'Deepika Jindal', '9789012346');
+insert into GUESTS values(126, 'Anwar Shaikh', '9890123457');
+insert into GUESTS values(127, 'Gurmeet Singh', '9901234568');
+insert into GUESTS values(128, 'Peter D Souza', '9012345679');
+insert into GUESTS values(129, 'Rekha Bheel', '9123456781');
+insert into GUESTS values(130, 'Shalini Arya', '9234567892');
+insert into GUESTS values(131, 'Rohan Agarwal', '9345678903');
+insert into GUESTS values(132, 'Amit Jain', '9456789014');
+
+
+----------------------------------------------- INSERT values in ENTRY_PASS table --------------------------------
+-- insert into ENTRY_PASS values(reservationID, guestID)
+insert into ENTRY_PASS values (2011, 108);
+insert into ENTRY_PASS values (2011, 109);
+insert into ENTRY_PASS values (2011, 110);
+insert into ENTRY_PASS values (2012, 111);
+insert into ENTRY_PASS values (2012, 112);
+insert into ENTRY_PASS values (2012, 113);
+insert into ENTRY_PASS values (2013, 114);
+insert into ENTRY_PASS values (2013, 115);
+insert into ENTRY_PASS values (2013, 116);
+insert into ENTRY_PASS values (2014, 117);
+insert into ENTRY_PASS values (2014, 118);
+insert into ENTRY_PASS values (2014, 119);
+insert into ENTRY_PASS values (2015, 120);
+insert into ENTRY_PASS values (2015, 121);
+insert into ENTRY_PASS values (2015, 122);
+insert into ENTRY_PASS values (2016, 126);
+insert into ENTRY_PASS values (2016, 124);
+insert into ENTRY_PASS values (2016, 125);
+insert into ENTRY_PASS values (2017, 126);
+insert into ENTRY_PASS values (2017, 127);
+insert into ENTRY_PASS values (2017, 128);
+insert into ENTRY_PASS values (2018, 129);
+insert into ENTRY_PASS values (2018, 130);
+insert into ENTRY_PASS values (2018, 131);
+insert into ENTRY_PASS values (2019, 132);
+insert into ENTRY_PASS values (2019, 111);
+insert into ENTRY_PASS values (2019, 114);
+insert into ENTRY_PASS values (2020, 125);
+insert into ENTRY_PASS values (2020, 128);
+insert into ENTRY_PASS values (2020, 110);
+insert into ENTRY_PASS values (2011, 115);
+insert into ENTRY_PASS values (2012, 121);
+insert into ENTRY_PASS values (2013, 105);
+insert into ENTRY_PASS values (2014, 105);
+insert into ENTRY_PASS values (2015, 107);
+insert into ENTRY_PASS values (2016, 123);
+insert into ENTRY_PASS values (2017, 118);
+insert into ENTRY_PASS values (2018, 127);
+insert into ENTRY_PASS values (2019, 110);
+insert into ENTRY_PASS values (2020, 111);
+insert into ENTRY_PASS values (2011, 112);
+insert into ENTRY_PASS values (2012, 131);
+insert into ENTRY_PASS values (2013, 106);
+insert into ENTRY_PASS values (2014, 102);
+insert into ENTRY_PASS values (2015, 103);
+insert into ENTRY_PASS values (2016, 112);
+insert into ENTRY_PASS values (2017, 119);
+insert into ENTRY_PASS values (2018, 120);
+insert into ENTRY_PASS values (2019, 126);
+insert into ENTRY_PASS values (2020, 127);
+
+
+----------------------------------------------- CREATE VIEW --------------------------------
+
+create view RESERVED_BY_CUSTOMERS 
+(customer_id, customer_name, booked_resort, city, facilities, resort_email) 
+as select t1.custID, t1.customerName, t3.resortName, t3.city, t3.facilities, t3.email
+from customer t1, reservation t2, resort t3
+where t1.custID = t2.custID and t2.resortID = t3.resortID;
